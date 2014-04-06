@@ -1,4 +1,5 @@
 *.py
 *.pyc
 !tests.py
+!text_model_functions.py
 .Rhistory
