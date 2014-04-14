@@ -1,5 +1,7 @@
 *.py
 *.pyc
+*ignore*
+.gitignore
 !tests.py
 !text_model_functions.py
 .Rhistory
