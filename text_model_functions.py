@@ -32,17 +32,33 @@ class Lemmatizer:
     wnl=WordNetLemmatizer()
     
     def fit(self,X,y,**fit_params):
-        pass
+        return self
     
-    def fit_transform(self,X,**fit_params):
-        self.transform(X,**fit_params)
-        return self.transform(X)
+    def fit_transform(self,X,y,**fit_params):
+        print "Fit-transform for lemmatizer"
+        print X
+        
+        transformed=self.fit(X,y,**fit_params).transform(X,**fit_params)
+        
+        print "Transformed:"
+        print transformed
+        
+        return transformed
     
     def transform(self,X,**fit_params):
         X_lemmatized=[]
+        print "Un-Lemmatized:"
+        print X
         for text in X:
-            X_lemmatized.append([self.wnl.lemmatize(t) for t in text])
-        return X_lemmatized   
+            textBlob=TextBlob(text)
+            X_lemmatized.append(" ".join([self.wnl.lemmatize(word) for word in textBlob.words]))
+            
+        print "Lemmatized:"
+        print X_lemmatized
+        return X_lemmatized  
+    
+    def get_params(self,deep=False):
+        return {} 
 
 """Function adapted from emh's code (http://stackoverflow.com/users/2673189/emh)"""
 def named_entities(text,types=['PERSON',"ORGANIZATION"]):
@@ -174,9 +190,9 @@ class TextModel:
        
         alphas=Series([.001,.01,.05,.1,.2,1,10])*N
         
-        text_cleaner=TextCleaner(other=options)
+        text_cleaner=TextCleaner(**options)
         
-        modules_list,options=modules_to_dictionary(modules)
+        modules_list,options_2=modules_to_dictionary(modules)
         if len(modules_list)==0:
             raise ValueError("No modules specified or found.")
 
@@ -184,10 +200,14 @@ class TextModel:
         #feature_union=CountVectorizer()
         ridge_model=RidgeWithStats()
         
-        pipe = Pipeline([('cleaner',text_cleaner),
-                         ('featurizer', feature_union),
-                         ('ridge_model', ridge_model)]
-        )
+        pipeline_list=[('cleaner',text_cleaner)]
+        if "lemmatize" in options and options["lemmatize"]:
+            pipeline_list.append(('lemmatizer', Lemmatizer()))
+        pipeline_list.append(('featurizer', feature_union))
+        pipeline_list.append(('ridge_model', ridge_model))
+
+        
+        pipe = Pipeline(pipeline_list)
         
 #         parameter_set_for_gridsearch = {'vectorizer__stop_words':("english",),
 #                         'featurizer__ngram_range': ((1,1),),
@@ -198,7 +218,8 @@ class TextModel:
 #                         'ridge_model__normalize':(True,)} 
         
         parameter_set_for_gridsearch = {'ridge_model__alpha': tuple(alphas),
-                        'ridge_model__normalize':(True,)} 
+                        'ridge_model__normalize':(True,),
+                        'featurizer__bag-of-words__lowercase':(False,), } 
         
         # Remove all parameters from the gridsearch that are set:
         #for key in parameters_initial.keys():
@@ -269,6 +290,8 @@ class TextModel:
         if isinstance(texts,(str, unicode)):
             texts=[texts]
         predictions=self.pipe.predict(texts)
+        if (len(texts)==1):
+            return predictions[0]
         return predictions
     
     def get_features(self,text):
@@ -282,12 +305,13 @@ class TextModel:
 class TextCleaner():
     lowercase=False
     
-    def __init__(self,**other):
-        if other is not None:
-            if "lowercase" in other:
-                self.lowercase=other["lowercase"]
-        pass
-    
+    options={}
+    def __init__(self,**kwargs):
+        self.options=kwargs
+        if kwargs is not None:
+            if "lowercase" in self.options:
+                self.lowercase=self.options["lowercase"]
+                
     def fit(self,X,y,**fit_params):
         return self
     
@@ -298,10 +322,10 @@ class TextCleaner():
         rx = re.compile('[^a-zA-Z]+')
         X_cleaned=[rx.sub(' ', str(t)).strip() for t in X] 
         if self.lowercase:
-            X_cleaned=[t.lower() for t in X] 
+            X_cleaned=[t.lower() for t in X_cleaned] 
         return X_cleaned
     
     def get_params(self,deep=False):
         # This needs to be fixed
-        return {"a":1}
+        return self.options
 
