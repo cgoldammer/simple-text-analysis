@@ -4,8 +4,9 @@ This should include both feature extraction and building predictive models.
 The package isn’t yet functional, but will be functional soon. The proposed syntax is as follows. Assume that you also have a vector of outcomes. To obtain a predictive bag-of-words model from the text, you write 
 
 ```python
+from text_model_functions import TextModel
 modules='bag-of-words'
-text_model=text_model_functions.TextModel(outcomes,texts,modules)
+text_model=TextModel(outcomes,texts,modules)
 ```
 
 If you want to know the outcome for some new text, you write
@@ -18,14 +19,14 @@ The package also contains additional feature extractors, for instance emotions (
         
 ```python
 modules=['bag-of-words','emotions','entities']
-text_model=text_model_functions.TextModel(outcomes,texts,modules)
+text_model=TextModel(outcomes,texts,modules)
 ```
 
 The package does the text cleaning for you. But you can also change default options, for instance by setting:
         
 ```python
 options={'lowercase':True,'lemmatize':True}
-text_model=text_model_functions.TextModel(outcomes,texts,modules,options)
+text_model=TextModel(outcomes,texts,modules,options)
 ```
 
 Simplifying the model this far does of course require making lots of assumptions
