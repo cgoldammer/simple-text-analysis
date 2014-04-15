@@ -5,30 +5,27 @@ The package isn’t yet functional, but will be functional soon. The proposed sy
 
 ```python
 modules='bag-of-words'
-text_model=text_model_functions.TextModel(outcomes,texts,modules,options=None,verbose=True)
+text_model=text_model_functions.TextModel(outcomes,texts,modules)
 ```
 
 If you want to know the outcome for some new text, you write
 
 ```python
-predicted_value= text_model.predict("Some new text")
+text_model.predict("Some new text")
 ```
         
 The package also contains additional feature extractors, for instance emotions (positive/negative and subjective/objective) and named entities (people and organizations). To extract these as well, you would write:
         
 ```python
 modules=['bag-of-words','emotions','entities']
-text_model=text_model_functions.TextModel(self.outcomes,self.texts_entities,modules,options=None,verbose=True)
+text_model=text_model_functions.TextModel(outcomes,texts,modules)
 ```
 
 The package does the text cleaning for you. But you can also change default options, for instance by setting:
         
 ```python
-options={
-	'lowercase':True,
-	'lemmatize':True,
-	}
-text_model=text_model_functions.TextModel(self.outcomes,self.texts_entities,modules,options,verbose=True)
+options={'lowercase':True,'lemmatize':True}
+text_model=text_model_functions.TextModel(outcomes,texts,modules,options)
 ```
 
 Simplifying the model this far does of course require making lots of assumptions
