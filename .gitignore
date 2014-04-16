@@ -1,5 +1,5 @@
-/source/*.py
-/source/*.pyc
+/src/*.py
+/src/*.pyc
 *.pyc
 .gitignore
 *.bat
@@ -8,6 +8,6 @@ Makefile
 /build/doctrees
 /build/html/_sources
 .gitignore
-!/source/tests.py
-!/source/text_model_functions.py
+!/src/tests.py
+!/src/text_model_functions.py
 
