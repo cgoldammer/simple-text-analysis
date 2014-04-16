@@ -1,5 +1,7 @@
 """This module contains all functions for simple-text-analysis. The package allows you
-to build a predictive model from text in one line of code.
+to build a predictive model from text in one line of code. This package takes care of
+a lot of non-trivial choices (such as text cleaning, estimation, and validation, via
+sensible defaults. 
 
 Example
 -------
@@ -17,7 +19,27 @@ The following shows that it's easy to use the module::
     
 """
 
-
+import pandas as pd
+import numpy as np
+from pandas import DataFrame,Series
+from sklearn.pipeline import Pipeline,FeatureUnion
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+from sklearn.preprocessing import StandardScaler
+from sklearn import linear_model
+from sklearn.linear_model import Ridge
+import re
+import math
+import random
+from operator import itemgetter
+import nltk
+# This is required to make NLTK work with virtual environments. Change the environment before using.
+nltk.data.path.append('/Users/cg/Dropbox/code/Python/nltk_data/')
+from nltk import word_tokenize, wordpunct_tokenize
+import pickle
+from sklearn.grid_search import GridSearchCV
+from nltk.stem import WordNetLemmatizer 
+from textblob import TextBlob
+from scipy import sparse
 
 class RidgeWithStats(Ridge):
     """This class runs a ridge regression, but it adds an attribute for
@@ -197,7 +219,7 @@ class TextModel:
     pipe = None
     regression_table=None
  
-    def __init__(self,outcomes,texts,modules,options,verbose=False):
+    def __init__(self,outcomes,texts,modules,options={},verbose=False):
         
         data=DataFrame({"y":outcomes,"text":texts})       
         N=data.shape[0]

@@ -1,6 +1,27 @@
 """This runs a range of unit tests for simple-text-analysis
 """
 
+import pandas as pd
+import numpy as np
+from pandas import DataFrame,Series
+from sklearn.pipeline import Pipeline,FeatureUnion
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+from sklearn.preprocessing import StandardScaler
+from sklearn import linear_model
+from sklearn.linear_model import Ridge
+import re
+import math
+import random
+from operator import itemgetter
+import nltk
+# This is required to make NLTK work with virtual environments. Change the environment before using.
+nltk.data.path.append('/Users/cg/Dropbox/code/Python/nltk_data/')
+from nltk import word_tokenize, wordpunct_tokenize
+import pickle
+from sklearn.grid_search import GridSearchCV
+from nltk.stem import WordNetLemmatizer 
+from textblob import TextBlob
+from scipy import sparse
 import unittest
 import text_model_functions
 from pandas.util.testing import assert_frame_equal
@@ -58,15 +79,25 @@ class TestTextModelFunctions(unittest.TestCase):
 2,"yes" """
 
     
-    texts=["hello","yes","no","why","is","hello","yes","no","why","is","I am Barack Obama"]
     texts_entities=["I am Barack Obama","I am John Mccain",
     "I am James","I loves Jim","I love John",
     "I am Jill","I am Jack","I am John",
     "I am Jack","I am Jack","I am John"]
+    pos_a=97
+    texts="one two three four five six seven eight nine ten eleven".split()
     outcomes=range(len(texts_entities))
     
     def setUp(self):
         pass
+    
+    def test_direction(self):
+        """Testing that the prediction increases with words at that have higher outcomes in the training data"""
+        modules=['bag-of-words']
+        text_model=text_model_functions.TextModel(self.outcomes,self.texts,modules)
+        predict_low=text_model.predict("one two three")
+        predict_high=text_model.predict("nine ten eleven")
+        print "Prediction if group low: %s | high: %s" %(predict_low,predict_high)
+        self.assertTrue(predict_low<predict_high)
     
     def test_feature_union(self):
         """Tests that combining multiple featurizers works as expected"""
@@ -75,7 +106,6 @@ class TestTextModelFunctions(unittest.TestCase):
         feature_union=FeatureUnion(modules_list)
         feature_union.fit(self.texts,self.outcomes)
         feature_union.transform(["unknown"])
-        
         
     def test_modules_to_dictionary(self):
         """Testing that the functions correctly translates a variety of types into a list and dictionary"""
