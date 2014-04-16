@@ -1,16 +1,9 @@
-'''
-Created on Apr 1, 2014
-
-@author: Christian Goldammer
-'''
+"""This runs a range of unit tests for simple-text-analysis
+"""
 
 import unittest
 import text_model_functions
-from textblob import TextBlob
-from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
-from pandas import DataFrame,Series
 from pandas.util.testing import assert_frame_equal
-from sklearn.pipeline import Pipeline,FeatureUnion
 
 class TestFeaturizers(unittest.TestCase):
     def test_lemmatizer(self):

@@ -1,0 +1,247 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Welcome to Simple Text Analysis’s documentation! &mdash; Simple Text Analysis 0.01 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.01',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Simple Text Analysis 0.01 documentation" href="#" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="#">Simple Text Analysis 0.01 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="welcome-to-simple-text-analysis-s-documentation">
+<h1>Welcome to Simple Text Analysis&#8217;s documentation!<a class="headerlink" href="#welcome-to-simple-text-analysis-s-documentation" title="Permalink to this headline">¶</a></h1>
+<p>Contents:</p>
+<div class="toctree-wrapper compound">
+<ul class="simple">
+</ul>
+</div>
+<span class="target" id="module-text_model_functions"></span><p>This module contains all functions for simple-text-analysis. The package allows you
+to build a predictive model from text in one line of code.</p>
+<div class="section" id="example">
+<h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
+<p>The following shows that it&#8217;s easy to use the module:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">text_model_functions</span> <span class="kn">import</span> <span class="n">TextModel</span>
+<span class="c"># A predictive text model requires outcomes and texts</span>
+<span class="n">texts</span><span class="o">=</span><span class="p">[</span><span class="s">&quot;hello&quot;</span><span class="p">,</span><span class="s">&quot;yes&quot;</span><span class="p">,</span><span class="s">&quot;no&quot;</span><span class="p">,</span><span class="s">&quot;why&quot;</span><span class="p">,</span><span class="s">&quot;is&quot;</span><span class="p">,</span><span class="s">&quot;hello&quot;</span><span class="p">,</span><span class="s">&quot;yes&quot;</span><span class="p">,</span><span class="s">&quot;no&quot;</span><span class="p">,</span><span class="s">&quot;why&quot;</span><span class="p">,</span><span class="s">&quot;is&quot;</span><span class="p">,</span><span class="s">&quot;I am John Lennon&quot;</span><span class="p">]</span>
+<span class="n">outcomes</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">texts_entities</span><span class="p">))</span>
+
+<span class="c"># Building a text model takes one line</span>
+<span class="n">text_model</span><span class="o">=</span><span class="n">TextModel</span><span class="p">(</span><span class="n">outcomes</span><span class="p">,</span><span class="n">texts</span><span class="p">,</span><span class="s">&#39;bag-of-words&#39;</span><span class="p">)</span>
+<span class="c"># A text model allows you to predict the outcome for an arbitrary text</span>
+<span class="n">text_model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="s">&quot;Jack Lennon&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="class">
+<dt id="text_model_functions.EmotionFeaturizer">
+<em class="property">class </em><tt class="descclassname">text_model_functions.</tt><tt class="descname">EmotionFeaturizer</tt><a class="headerlink" href="#text_model_functions.EmotionFeaturizer" title="Permalink to this definition">¶</a></dt>
+<dd><p>This class is used to extract macro-features of the text. Currently, it includes
+sentiment and subjectivity</p>
+<p class="rubric">Methods</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="text_model_functions.Lemmatizer">
+<em class="property">class </em><tt class="descclassname">text_model_functions.</tt><tt class="descname">Lemmatizer</tt><a class="headerlink" href="#text_model_functions.Lemmatizer" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is a transformer for lemmatization that can be used in a pipeline</p>
+<p class="rubric">Methods</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="text_model_functions.NamedEntityFeaturizer">
+<em class="property">class </em><tt class="descclassname">text_model_functions.</tt><tt class="descname">NamedEntityFeaturizer</tt><a class="headerlink" href="#text_model_functions.NamedEntityFeaturizer" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is a transformer that turns text into the named entities contained.</p>
+<p class="rubric">Attributes</p>
+<p class="rubric">Methods</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="text_model_functions.RidgeWithStats">
+<em class="property">class </em><tt class="descclassname">text_model_functions.</tt><tt class="descname">RidgeWithStats</tt><big>(</big><em>alpha=1.0</em>, <em>fit_intercept=True</em>, <em>normalize=False</em>, <em>copy_X=True</em>, <em>max_iter=None</em>, <em>tol=0.001</em>, <em>solver='auto'</em><big>)</big><a class="headerlink" href="#text_model_functions.RidgeWithStats" title="Permalink to this definition">¶</a></dt>
+<dd><p>This class runs a ridge regression, but it adds an attribute for
+the standard deviation of the feature matrix, which is useful
+to analyze the prediction.</p>
+<p class="rubric">Methods</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="text_model_functions.TextCleaner">
+<em class="property">class </em><tt class="descclassname">text_model_functions.</tt><tt class="descname">TextCleaner</tt><big>(</big><em>**kwargs</em><big>)</big><a class="headerlink" href="#text_model_functions.TextCleaner" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function takes car of cleaning the text before it&#8217;s featurized.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>lowercase: bool</strong> :</p>
+<blockquote>
+<div><p>Flag to convert the text to lowercase, defaults to false</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>class</strong> :</p>
+<blockquote class="last">
+<div><p>A transformer that can be used in a pipeline</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="text_model_functions.TextModel">
+<em class="property">class </em><tt class="descclassname">text_model_functions.</tt><tt class="descname">TextModel</tt><big>(</big><em>outcomes</em>, <em>texts</em>, <em>modules</em>, <em>options</em>, <em>verbose=False</em><big>)</big><a class="headerlink" href="#text_model_functions.TextModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is the main class from this module. It allows you to build a text model
+given outcomes, texts, text modules used, and options.</p>
+<p class="rubric">Attributes</p>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="text_model_functions.TextModel.grid_search">
+<tt class="descname">grid_search</tt><big>(</big><em>train</em>, <em>pipe</em>, <em>params</em><big>)</big><a class="headerlink" href="#text_model_functions.TextModel.grid_search" title="Permalink to this definition">¶</a></dt>
+<dd><p>Train a model, optimizing over meta-parameters using sklearn&#8217;s grid_search
+Returns the best estimator from a sklearn.grid_search operation
+(See <a class="reference external" href="http://scikit-learn.org/stable/modules/grid_search.html">http://scikit-learn.org/stable/modules/grid_search.html</a>)</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="text_model_functions.modules_to_dictionary">
+<tt class="descclassname">text_model_functions.</tt><tt class="descname">modules_to_dictionary</tt><big>(</big><em>modules</em><big>)</big><a class="headerlink" href="#text_model_functions.modules_to_dictionary" title="Permalink to this definition">¶</a></dt>
+<dd><p>The modules argument can be provided in a wide variety of types (string, list,dictionary).
+Internally, this will get translated to a list (of module names and modules) and
+a dictionary of options.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="text_model_functions.named_entities">
+<tt class="descclassname">text_model_functions.</tt><tt class="descname">named_entities</tt><big>(</big><em>text, types=['PERSON', 'ORGANIZATION']</em><big>)</big><a class="headerlink" href="#text_model_functions.named_entities" title="Permalink to this definition">¶</a></dt>
+<dd><p>This functions returns named entities from a text. The function adapted from emh&#8217;s code (<a class="reference external" href="http://stackoverflow.com/users/2673189/emh">http://stackoverflow.com/users/2673189/emh</a>)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>text: str</strong> :</p>
+<blockquote>
+<div><p>UTF-8 string</p>
+</div></blockquote>
+<p><strong>types: list of strings</strong> :</p>
+<blockquote>
+<div><p>Currently the list can include only &#8220;PERSON&#8221; and &#8220;ORGANIZATION&#8221;</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>dict</strong> :</p>
+<blockquote class="last">
+<div><p>Dictionary with one entry for each type of entity. For each of these entries, contains a list of strings with found entities</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><em>Index</em></a></li>
+<li><a class="reference internal" href="py-modindex.html"><em>Module Index</em></a></li>
+<li><a class="reference internal" href="search.html"><em>Search Page</em></a></li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Welcome to Simple Text Analysis&#8217;s documentation!</a><ul>
+<li><a class="reference internal" href="#example">Example</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/index.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="#">Simple Text Analysis 0.01 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Christian Goldammer.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

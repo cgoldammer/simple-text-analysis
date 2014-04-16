@@ -1,7 +1,12 @@
-*.py
-*.pyc
+/source/*.py
+/source/*.pyc
 *ignore*
+*.bat
+Makefile
+/source
+/doctrees
+/html/_sources
 .gitignore
-!tests.py
-!text_model_functions.py
-.Rhistory
+!/source/tests.py
+!/source/text_model_functions.py
+
