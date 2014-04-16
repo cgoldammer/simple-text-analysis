@@ -1,11 +1,12 @@
 /source/*.py
 /source/*.pyc
-*ignore*
+*.pyc
+.gitignore
 *.bat
 Makefile
 /source
-/doctrees
-/html/_sources
+/build/doctrees
+/build/html/_sources
 .gitignore
 !/source/tests.py
 !/source/text_model_functions.py
