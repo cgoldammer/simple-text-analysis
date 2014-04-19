@@ -25,6 +25,7 @@ from scipy import sparse
 import unittest
 import text_model_functions
 from pandas.util.testing import assert_frame_equal
+from text_model_functions import TextModel
 
 class TestFeaturizers(unittest.TestCase):
     def test_lemmatizer(self):
@@ -93,7 +94,7 @@ class TestTextModelFunctions(unittest.TestCase):
     def test_direction(self):
         """Testing that the prediction increases with words at that have higher outcomes in the training data"""
         modules=['bag-of-words']
-        text_model=text_model_functions.TextModel(self.outcomes,self.texts,modules)
+        text_model=TextModel(self.outcomes,self.texts,modules)
         predict_low=text_model.predict("one two three")
         predict_high=text_model.predict("nine ten eleven")
         print "Prediction if group low: %s | high: %s" %(predict_low,predict_high)
@@ -104,7 +105,7 @@ class TestTextModelFunctions(unittest.TestCase):
         modules=['bag-of-words','emotions','entities']
         modules_list,options=text_model_functions.modules_to_dictionary(modules)
         feature_union=FeatureUnion(modules_list)
-        feature_union.fit(self.texts,self.outcomes)
+        feature_union.fit(self.texts_entities,self.outcomes)
         feature_union.transform(["unknown"])
         
     def test_modules_to_dictionary(self):
@@ -130,13 +131,13 @@ class TestTextModelFunctions(unittest.TestCase):
         
         # The following are example usages
         modules='bag-of-words'
-        text_model=text_model_functions.TextModel(self.outcomes,self.texts,modules,options=None,verbose=True)
+        text_model=TextModel(self.outcomes,self.texts,modules)
         
         modules=['bag-of-words']
-        text_model=text_model_functions.TextModel(self.outcomes,self.texts,modules,options=None,verbose=True)
+        text_model=TextModel(self.outcomes,self.texts,modules)
         
         modules=['bag-of-words','emotions','entities']
-        text_model=text_model_functions.TextModel(self.outcomes,self.texts_entities,modules,options=None,verbose=True)
+        text_model=TextModel(self.outcomes,self.texts_entities,modules)
         
         modules={'bag-of-words':{'max__features':None},
                  'emotions':True,
@@ -146,27 +147,27 @@ class TestTextModelFunctions(unittest.TestCase):
         options={'lowercase':True,
                  'lemmatize':True,
         }
-        text_model=text_model_functions.TextModel(self.outcomes,self.texts_entities,modules,options,verbose=True)
+        text_model=text_model_functions.TextModel(self.outcomes,self.texts_entities,modules,options)
         print text_model.predict(["Unknown"])
         
     def test_options(self):
         modules='bag-of-words'
         options={'lowercase':False}
         modules_list,options=text_model_functions.modules_to_dictionary(modules)
-        text_model=text_model_functions.TextModel(self.outcomes,self.texts_entities,modules,options,verbose=True)
+        text_model=TextModel(self.outcomes,self.texts_entities,modules,options)
         self.assertTrue(text_model.predict(["James"])!=text_model.predict(["james"]))
         
         options={'lowercase':True}
-        text_model_low=text_model_functions.TextModel(self.outcomes,self.texts_entities,modules,options,verbose=True)
+        text_model_low=TextModel(self.outcomes,self.texts_entities,modules,options)
         self.assertTrue(text_model_low.predict(["Barack"])==text_model_low.predict(["barack"]))
         
         options={'lemmatize':False}
         modules_list,options=text_model_functions.modules_to_dictionary(modules)
-        text_model=text_model_functions.TextModel(self.outcomes,self.texts_entities,modules,options,verbose=True)
+        text_model=TextModel(self.outcomes,self.texts_entities,modules,options)
         self.assertTrue(text_model.predict(["loves"])!=text_model.predict(["love"]))
         
         options={'lemmatize':True}
-        text_model_low=text_model_functions.TextModel(self.outcomes,self.texts_entities,modules,options,verbose=True)
+        text_model_low=TextModel(self.outcomes,self.texts_entities,modules,options)
         self.assertTrue(text_model_low.predict(["loves"])==text_model_low.predict(["love"]))
         
         
