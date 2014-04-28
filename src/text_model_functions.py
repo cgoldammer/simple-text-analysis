@@ -46,30 +46,35 @@ to analyze the prediction."""
         return Ridge.fit(self, X, y, sample_weight)
 
 
-class Lemmatizer:
-    """This is a transformer for lemmatization."""
-    wnl = WordNetLemmatizer()
-
-    def fit(self, X, y, **fit_params):
-        return self
-
+class BaseTransformer:
+    
     def fit_transform(self, X, y, **fit_params):
         transformed = self.fit(X, y, **fit_params).transform(X, **fit_params)
         return transformed
+    
+    def fit(self, X, y, **fit_params):
+        return self
+    
+    def transform(self, X, **fit_params):
+        pass
+
+
+# Start from base class and then override function transform_word
+class Lemmatizer(BaseTransformer):
+    """This is a transformer for lemmatization."""
+    wnl = WordNetLemmatizer()
 
     def transform(self, X, **fit_params):
-        X_lemmatized = []
-        for text in X:
-            words = TextBlob(text).words
-            text_lemmatized = " ".join([self.wnl.lemmatize(word) for word in words])
-            X_lemmatized.append(text_lemmatized)
+        X_lemmatized = [" ".join(
+          [self.wnl.lemmatize(word) for word in TextBlob(text).words])
+          for text in X]
         return X_lemmatized
 
     def get_params(self, deep=False):
         return {}
 
 
-class NamedEntityFeaturizer:
+class NamedEntityFeaturizer(BaseTransformer):
     """This is a transformer that turns text into named entities."""
     types = ["PERSON", "ORGANIZATION"]
     entities = []
@@ -81,10 +86,6 @@ class NamedEntityFeaturizer:
         self.entities = entity_dict_to_list(entities)
         self.entities_set = set(self.entities)
         return self
-
-    def fit_transform(self, X, y, **fit_params):
-        self.fit(X, y, **fit_params).transform(X, **fit_params)
-        return self.transform(X)
 
     def transform(self, X, **fit_params):
         X_data = []
@@ -101,7 +102,7 @@ class NamedEntityFeaturizer:
     def get_params(self, deep=False):
         return {}
 
-
+# Define a global dictionary with class subjects.
 def module_from_name(module):
     if module == "bag-of-words":
         return ("bag-of-words", CountVectorizer())
@@ -117,7 +118,8 @@ def modules_to_dictionary(modules):
     list (of module names and modules) and a dictionary of options."""
     modules_list = []
     options = {}
-
+    # isinstance. And transform into dictionary. Also use 'for' regardless
+    # of type
     if type(modules) == str:
         modules_list.append(module_from_name(modules))
     if type(modules) == list:
@@ -162,6 +164,7 @@ def named_entities(text, types=["PERSON", "ORGANIZATION"]):
 
 def entity_dict_to_list(entity_dict):
     entities = []
+    # Note: Use iterators.
     for type_ in entity_dict.keys():
         ent_type = entity_dict[type_]
         entities.extend(["ENTITY__" + type_ + "_" + e for e in ent_type])
@@ -169,40 +172,25 @@ def entity_dict_to_list(entity_dict):
 
 
 def position_list(targets, sources, verbose=False):
-    if verbose:
-        print "Finding the positions of %s in %s" % (sources, targets)
     positions = [(target in sources) for target in targets]
-    if verbose:
-        print "Positions: %s" % positions
     positions = 1 * Series(positions)
-    if verbose:
-        print "Positions: %s" % positions
     return list(positions)
 
 
-class EmotionFeaturizer:
+class EmotionFeaturizer(BaseTransformer):
     """This class is used to extract macro-features of the text.
     Currently, it includes sentiment and subjectivity"""
     types = ["polarity", "subjectivity"]
 
     def value_given_type(self, type_, text):
-        sentiment = TextBlob(text).sentiment
-        if type_ == "polarity":
-            return sentiment.polarity
-        if type_ == "subjectivity":
-            return sentiment.subjectivity
-
-    def fit(self, X, y, **fit_params):
-        return self
-
-    def fit_transform(self, X, y, **fit_params):
-        self.fit(X, y, **fit_params).transform(X, **fit_params)
-        return self.transform(X)
+        sentiment = TextBlob(text).sentiment._asdict()
+        return sentiment[type_]
 
     def transform(self, X, **fit_params):
         X_data = []
         for text in X:
             text_data = []
+            # Use list comprehension
             for type_ in self.types:
                 text_data.append(self.value_given_type(type_, text))
             X_data.append(text_data)
@@ -219,13 +207,20 @@ class TextModel:
     pipe = None
     regression_table = None
 
+    # Do not use mutable objects. new classes
     def __init__(self, outcomes, texts, modules, options={}, verbose=False):
 
         data = DataFrame({"y": outcomes, "text": texts})
         N = data.shape[0]
         data.index = [str(x) for x in range(N)]
 
-        alphas = Series([.001, .01, .05, .1, .2, 1, 10]) * N
+        # Defining the alphas for the cross-validation. Note that
+        # alpha scales proportionally with the number of observations.
+        number_of_alphas = 5
+        logspace_min = -2
+        alphas = Series(np.logspace(logspace_min,
+                                    logspace_min+number_of_alphas-1,
+                                    number_of_alphas)) * N
 
         text_cleaner = TextCleaner(**options)
 
@@ -234,11 +229,10 @@ class TextModel:
             raise ValueError("No modules specified or found.")
 
         feature_union = FeatureUnion(modules_list)
-        #feature_union=CountVectorizer()
         ridge_model = RidgeWithStats()
 
         pipeline_list = [("cleaner", text_cleaner)]
-        if "lemmatize" in options and options["lemmatize"]:
+        if options.get("lemmatize"):
             pipeline_list.append(("lemmatizer", Lemmatizer()))
         pipeline_list.append(("featurizer", feature_union))
         pipeline_list.append(("ridge_model", ridge_model))
@@ -272,17 +266,12 @@ class TextModel:
         #if verbose:
         #print "Alpha from grid search: %s" %parameters['ridge_model__alpha']
         if parameters["ridge_model__alpha"] == max(alphas):
-            raise(ValueError("Regularization parameter hitting upper bound"))
+            raise ValueError("Regularization parameter hitting upper bound")
 
-        #self.coef_normalized=pipe.steps[-1][-1].coef_
         ridge = pipe.named_steps["ridge_model"]
         self.coef = ridge.coef_
-#         self.std_X=ridge.std_X
         self.pipe = pipe
-#         self.parameters=parameters
 
-        #self.features=self.pipe.named_steps['vectorizer'].get_feature_names()
-        #self.regression_table=self.get_regression_table()
 
     def grid_search(self, train, pipe, params):
         """
@@ -290,6 +279,8 @@ class TextModel:
         grid_search. Returns the best estimator from a sklearn.grid_search
         operation
         (See http://scikit-learn.org/stable/modules/grid_search.html)
+        
+        Function contributed by Ryan Wang.
         """
         grid_search = GridSearchCV(estimator=pipe, param_grid=params)
         grid_search.fit(train.text, train.y)
@@ -302,25 +293,19 @@ class TextModel:
         m = pickle.load(fp)
         self.pipe = m.pipe
 
+    # Potentially use predict and predict_one with scalar
     def predict(self, texts):
         # texts_original = texts
         # Put text into pipeline
-        if isinstance(texts, (str, unicode)):
+        if isinstance(texts, basestring):
             texts = [texts]
         predictions = self.pipe.predict(texts)
         if (len(texts) == 1):
             return predictions[0]
         return predictions
 
-    def get_features(self, text):
-        x = Pipeline(self.pipe.steps[0:2]).transform([text]).toarray()[0]
-        features = Series(self.features)[Series(x) >= 1]
-        tab = self.regression_table
-        coefficients_for_features = tab[tab.index.isin(features)]
-        return coefficients_for_features
 
-
-class TextCleaner():
+class TextCleaner(BaseTransformer):
     """This function takes car of cleaning the text before it's featurized.
 
     Parameters
@@ -343,12 +328,6 @@ class TextCleaner():
         if kwargs is not None:
             if "lowercase" in self.options:
                 self.lowercase = self.options["lowercase"]
-
-    def fit(self, X, y, **fit_params):
-        return self
-
-    def fit_transform(self, X, y, **fit_params):
-        return self.fit(X, y, **fit_params).transform(X)
 
     def transform(self, X, **fit_params):
         rx = re.compile("[^a-zA-Z]+")
