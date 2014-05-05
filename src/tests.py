@@ -61,15 +61,11 @@ class TestFeaturizers(unittest.TestCase):
 
 
 class TestTextModelFunctions(unittest.TestCase):
-    minimal_csv = """outcome,text
-1,"hello"
-2,"yes" """
 
     texts_entities = ["I am Barack Obama", "I am John Mccain",
     "I am James", "I loves Jim", "I love John",
     "I am Jill", "I am Jack", "I am John",
     "I am Jack", "I am Jack", "I am John"]
-    pos_a = 97
     texts = "one two three four five six seven eight nine ten eleven".split()
     outcomes = range(len(texts_entities))
 
@@ -80,7 +76,8 @@ class TestTextModelFunctions(unittest.TestCase):
         """Testing that the prediction increases with words at that have 
         higher outcomes in the training data"""
         modules = ["bag-of-words"]
-        text_model = TextModel(self.outcomes, self.texts, modules)
+        options = {'remove-stopwords': False}
+        text_model = TextModel(self.outcomes, self.texts, modules, options)
         predict_low = text_model.predict("one two three")
         predict_high = text_model.predict("nine ten eleven")
         print "Prediction if group low: %s | high: %s" % (predict_low, predict_high)
@@ -114,11 +111,14 @@ class TestTextModelFunctions(unittest.TestCase):
 
     def test_create_basic_model(self):
         """Testing example usages"""
+        
+        options = {'remove-stopwords': False}
+        
         modules="bag-of-words"
-        text_model = TextModel(self.outcomes, self.texts, modules)
+        text_model = TextModel(self.outcomes, self.texts, modules, options)
 
         modules = ["bag-of-words"]
-        text_model = TextModel(self.outcomes, self.texts, modules)
+        text_model = TextModel(self.outcomes, self.texts, modules, options)
 
         modules = ["bag-of-words", "emotions", "entities"]
         text_model = TextModel(self.outcomes, self.texts_entities, modules)

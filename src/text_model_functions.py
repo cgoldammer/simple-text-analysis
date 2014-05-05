@@ -36,15 +36,12 @@ from sklearn.grid_search import GridSearchCV
 from nltk.stem import WordNetLemmatizer
 from textblob import TextBlob
 
-
 class RidgeWithStats(Ridge):
     """This class runs a ridge regression, but it adds an attribute for
 the standard deviation of the feature matrix, which is useful
-to analyze the prediction."""
+to analyze the prediction. Not yet implemented for now."""
     def fit(self, X, y, sample_weight=1.0):
-        #self.std_X=X.std()
         return Ridge.fit(self, X, y, sample_weight)
-
 
 class BaseTransformer:
     
@@ -132,7 +129,7 @@ def modules_to_dictionary(modules):
     return modules_list, options
 
 
-def named_entities(text, types=["PERSON", "ORGANIZATION"]):
+def named_entities(text, types=None):
     """This functions returns named entities from a text.
     Adapted from emh's code (http://stackoverflow.com/users/2673189/emh)
 
@@ -149,6 +146,8 @@ def named_entities(text, types=["PERSON", "ORGANIZATION"]):
         Dictionary with one entry for each type of entity. For each of these 
         entries, contains a list of strings with found entities
     """
+    if not types:
+        types = ["PERSON", "ORGANIZATION"]
     named_entities = {"PERSON": [], "ORGANIZATION": []}
     tokens = nltk.tokenize.word_tokenize(text)
     pos = nltk.pos_tag(tokens)
@@ -207,12 +206,19 @@ class TextModel:
     pipe = None
     regression_table = None
 
-    # Do not use mutable objects. new classes
-    def __init__(self, outcomes, texts, modules, options={}, verbose=False):
+    def __init__(self, outcomes, texts, modules, options=None, verbose=False):
+
+        # Setting the default options
+        if not options:
+            options={'lemmatize': False,
+                     'lowercase': False,
+                     'remove-stopwords': True}
 
         data = DataFrame({"y": outcomes, "text": texts})
         N = data.shape[0]
         data.index = [str(x) for x in range(N)]
+        
+        
 
         # Defining the alphas for the cross-validation. Note that
         # alpha scales proportionally with the number of observations.
@@ -231,43 +237,50 @@ class TextModel:
         feature_union = FeatureUnion(modules_list)
         ridge_model = RidgeWithStats()
 
-        pipeline_list = [("cleaner", text_cleaner)]
-        if options.get("lemmatize"):
-            pipeline_list.append(("lemmatizer", Lemmatizer()))
-        pipeline_list.append(("featurizer", feature_union))
-        pipeline_list.append(("ridge_model", ridge_model))
+        pipeline_list = [('cleaner', text_cleaner)]
+        if options.get('lemmatize'):
+            pipeline_list.append(('lemmatizer', Lemmatizer()))
+        pipeline_list.append(('featurizer', feature_union))
+        pipeline_list.append(('ridge_model', ridge_model))
 
         pipe = Pipeline(pipeline_list)
+        
+        parameters_initial={'ridge_model__normalize': True}
+        # If bag-of-words is included, add the relevant parameters
+        if 'bag-of-words' in modules:
+            def vec_name(param): return('featurizer__bag-of-words__'+param)
+            parameters_initial[vec_name('lowercase')] = False
+            parameters_initial[vec_name('ngram_range')] = (1,1)
+            if options.get('remove-stopwords'):
+                parameters_initial[vec_name('stop_words')] = "english"
 
-        parameter_for_gridsearch = {"ridge_model__alpha": tuple(alphas),
-                        "ridge_model__normalize": (True,),
-                        "featurizer__bag-of-words__lowercase": (False,), }
+        parameter_for_gridsearch = {'ridge_model__alpha': tuple(alphas),
+                }
+        
+        pipe.set_params(**parameters_initial)
 
-        # Pick meta-parameters using grid_search
+        # Pick meta-parameters using grid_search.
         grid_result = self.grid_search(data, pipe, parameter_for_gridsearch)
         (parameters_gridsearch_result, pipe) = grid_result
-        if verbose:
-            print "Results of grid-search:"
-            print parameters_gridsearch_result
-
-        parameters = parameters_gridsearch_result
-
         # I trust a regression only if the optimal regularization
         # parameter alpha is strictly inside the grid.
+        if parameters_gridsearch_result["ridge_model__alpha"] == max(alphas):
+            raise ValueError("Regularization parameter hitting upper bound")
+        
+        # The full parameters consist of the initial values
+        # and the parameters found through the grid-search
+        parameters = parameters_initial
+        for (key,value) in parameters_gridsearch_result.iteritems():
+            parameters[key]=value
+
         data['y_hat'] = pipe.predict(texts)
         if verbose:
-            #print "Parameters before grid-search:"
-            #print parameters_initial
             print "Parameters from grid-search:"
             print parameters_gridsearch_result
-            print "All parameters:"
+            print "Final parameters:"
             print parameters
-
-        #if verbose:
-        #print "Alpha from grid search: %s" %parameters['ridge_model__alpha']
-        if parameters["ridge_model__alpha"] == max(alphas):
-            raise ValueError("Regularization parameter hitting upper bound")
-
+        
+        # Keeping the regression, its coefficients, and the pipe as attributes
         ridge = pipe.named_steps["ridge_model"]
         self.coef = ridge.coef_
         self.pipe = pipe
@@ -293,10 +306,7 @@ class TextModel:
         m = pickle.load(fp)
         self.pipe = m.pipe
 
-    # Potentially use predict and predict_one with scalar
     def predict(self, texts):
-        # texts_original = texts
-        # Put text into pipeline
         if isinstance(texts, basestring):
             texts = [texts]
         predictions = self.pipe.predict(texts)
@@ -320,7 +330,6 @@ class TextCleaner(BaseTransformer):
     """
 
     lowercase = False
-
     options = {}
 
     def __init__(self, **kwargs):
@@ -336,6 +345,8 @@ class TextCleaner(BaseTransformer):
             X_cleaned = [t.lower() for t in X_cleaned]
         return X_cleaned
 
-    def get_params(self, deep=False):
-        # This needs to be fixed
+    def get_params(self, deep=True):
         return self.options
+    
+    def set_params(self,**parameters):
+        self.options=parameters
