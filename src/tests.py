@@ -12,13 +12,13 @@ import unittest
 from sklearn.pipeline import FeatureUnion
 from sklearn.feature_extraction.text import CountVectorizer
 from pandas.util.testing import assert_frame_equal
-import text_model_functions
-from text_model_functions import TextModel, modules_to_dictionary
+import text_model as tm
+from text_model import TextModel, modules_to_dictionary
 
 class TestFeaturizers(unittest.TestCase):
     def test_lemmatizer(self):
         """Testing that the lemmatizer works correctly"""
-        lemmatizer = text_model_functions.Lemmatizer()
+        lemmatizer = tm.Lemmatizer()
         unlemmatized = ["does", "goes", "seas"]
         lemmatized = lemmatizer.transform(unlemmatized)
         print "Lemmatized:"
@@ -30,7 +30,7 @@ class TestFeaturizers(unittest.TestCase):
         text_train = "My name is John Adams and I am Scottie Pippen."
         text_test = "Michael Jordan is playing basketball with Scottie Pippen"
 
-        named_entity_featurizer = text_model_functions.NamedEntityFeaturizer()
+        named_entity_featurizer = tm.NamedEntityFeaturizer()
         named_entity_featurizer.fit([text_train], y=None)
 
         X_train = named_entity_featurizer.transform([text_train])
@@ -51,7 +51,7 @@ class TestFeaturizers(unittest.TestCase):
         text = "I am happy and you better believe it."
         sentiment = TextBlob(text).sentiment
 
-        emotion_featurizer = text_model_functions.EmotionFeaturizer()
+        emotion_featurizer = tm.EmotionFeaturizer()
         transformed = emotion_featurizer.fit_transform([text], y=None)
 
         print "Transformed: %s" % transformed
@@ -96,10 +96,10 @@ class TestTextModelFunctions(unittest.TestCase):
         into a list and dictionary"""
 
         module_bag_of_words = ("bag-of-words", CountVectorizer())
-        module_emotions = ("emotions", text_model_functions.EmotionFeaturizer())
+        module_emotions = ("emotions", tm.EmotionFeaturizer())
 
         modules = ["bag-of-words", "emotions"]
-        modules_list, _ = text_model_functions.modules_to_dictionary(modules)
+        modules_list, _ = tm.modules_to_dictionary(modules)
         expected_module_list = [module_bag_of_words, module_emotions]
         for i in range(len(modules)):
             self.assertEqual(modules_list[i][0], expected_module_list[i][0])

@@ -218,8 +218,6 @@ class TextModel:
         N = data.shape[0]
         data.index = [str(x) for x in range(N)]
         
-        
-
         # Defining the alphas for the cross-validation. Note that
         # alpha scales proportionally with the number of observations.
         number_of_alphas = 5

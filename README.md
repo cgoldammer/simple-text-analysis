@@ -7,7 +7,7 @@ To use the package, you need data: Lists for outcomes and texts.
 To obtain a predictive bag-of-words model from the text, you write 
 
 ```python
-from text_model_functions import TextModel
+from text_model import TextModel
 modules = "bag-of-words"
 text_model = TextModel(outcomes, texts, modules)
 ```
