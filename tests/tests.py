@@ -6,14 +6,14 @@ from pandas import DataFrame
 import nltk
 # This is required to make NLTK work with virtual environments. 
 # Change the environment before using.
-nltk.data.path.append('/Users/cg/Dropbox/code/Python/nltk_data/')
+#nltk.data.path.append('/Users/cg/Dropbox/code/Python/nltk_data/')
 from textblob import TextBlob
 import unittest
 from sklearn.pipeline import FeatureUnion
 from sklearn.feature_extraction.text import CountVectorizer
 from pandas.util.testing import assert_frame_equal
-import text_model as tm
-from text_model import TextModel, modules_to_dictionary
+from ..src import text_model as tm
+from ..src.text_model import TextModel, modules_to_dictionary
 
 class TestFeaturizers(unittest.TestCase):
     def test_lemmatizer(self):
@@ -60,7 +60,7 @@ class TestFeaturizers(unittest.TestCase):
         self.assertEqual(transformed[0,1], sentiment.subjectivity)
 
 
-class TestTextModelFunctions(unittest.TestCase):
+class TestTextModel(unittest.TestCase):
 
     texts_entities = ["I am Barack Obama", "I am John Mccain",
     "I am James", "I loves Jim", "I love John",
@@ -87,6 +87,8 @@ class TestTextModelFunctions(unittest.TestCase):
         """Tests that combining multiple featurizers works as expected"""
         modules = ["bag-of-words", "emotions", "entities"]
         modules_list, _ = modules_to_dictionary(modules)
+        print("Modules:")
+        print(modules_list)
         feature_union = FeatureUnion(modules_list)
         feature_union.fit(self.texts_entities, self.outcomes)
         feature_union.transform(["unknown"])

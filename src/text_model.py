@@ -30,7 +30,7 @@ import re
 import nltk
 # This is required to make NLTK work with virtual environments.
 # Change the environment before using.
-nltk.data.path.append("/Users/cg/Dropbox/code/Python/nltk_data/")
+# nltk.data.path.append("/Users/cg/Dropbox/code/Python/nltk_data/")
 import pickle
 from sklearn.grid_search import GridSearchCV
 from nltk.stem import WordNetLemmatizer
@@ -42,62 +42,6 @@ the standard deviation of the feature matrix, which is useful
 to analyze the prediction. Not yet implemented for now."""
     def fit(self, X, y, sample_weight=1.0):
         return Ridge.fit(self, X, y, sample_weight)
-
-class BaseTransformer:
-    
-    def fit_transform(self, X, y, **fit_params):
-        transformed = self.fit(X, y, **fit_params).transform(X, **fit_params)
-        return transformed
-    
-    def fit(self, X, y, **fit_params):
-        return self
-    
-    def transform(self, X, **fit_params):
-        pass
-
-
-# Start from base class and then override function transform_word
-class Lemmatizer(BaseTransformer):
-    """This is a transformer for lemmatization."""
-    wnl = WordNetLemmatizer()
-
-    def transform(self, X, **fit_params):
-        X_lemmatized = [" ".join(
-          [self.wnl.lemmatize(word) for word in TextBlob(text).words])
-          for text in X]
-        return X_lemmatized
-
-    def get_params(self, deep=False):
-        return {}
-
-
-class NamedEntityFeaturizer(BaseTransformer):
-    """This is a transformer that turns text into named entities."""
-    types = ["PERSON", "ORGANIZATION"]
-    entities = []
-    entities_set = None
-
-    def fit(self, X, y, **fit_params):
-        text_all = " ".join(X)
-        entities = named_entities(text_all, self.types)
-        self.entities = entity_dict_to_list(entities)
-        self.entities_set = set(self.entities)
-        return self
-
-    def transform(self, X, **fit_params):
-        X_data = []
-        for text in X:
-            entities = named_entities(text, self.types)
-            entities_in_row = entity_dict_to_list(entities)
-            positions = position_list(self.entities_set, entities_in_row)
-            X_data.append(positions)
-        X_data = np.array(X_data)
-        if X_data.shape[1] == 0:
-            raise ValueError("No named entities in training data!")
-        return X_data
-
-    def get_params(self, deep=False):
-        return {}
 
 # Define a global dictionary with class subjects.
 def module_from_name(module):
@@ -153,7 +97,7 @@ def named_entities(text, types=None):
     pos = nltk.pos_tag(tokens)
     sentt = nltk.ne_chunk(pos, binary=False)
     for type_ in types:
-        for subtree in sentt.subtrees(filter=lambda t: t.node == type_):
+        for subtree in sentt.subtrees(filter=lambda t: t.label() == type_):
             entity = ""
             for leaf in subtree.leaves():
                 entity = entity + " " + leaf[0]
@@ -175,6 +119,61 @@ def position_list(targets, sources, verbose=False):
     positions = 1 * Series(positions)
     return list(positions)
 
+class BaseTransformer:
+
+    def fit_transform(self, X, y, **fit_params):
+        transformed = self.fit(X, y, **fit_params).transform(X, **fit_params)
+        return transformed
+
+    def fit(self, X, y, **fit_params):
+        return self
+
+    def transform(self, X, **fit_params):
+        pass
+
+
+# Start from base class and then override function transform_word
+class Lemmatizer(BaseTransformer):
+    """This is a transformer for lemmatization."""
+    wnl = WordNetLemmatizer()
+
+    def transform(self, X, **fit_params):
+        X_lemmatized = [" ".join(
+          [self.wnl.lemmatize(word) for word in TextBlob(text).words])
+          for text in X]
+        return X_lemmatized
+
+    def get_params(self, deep=False):
+        return {}
+
+
+class NamedEntityFeaturizer(BaseTransformer):
+    """This is a transformer that turns text into named entities."""
+    types = ["PERSON", "ORGANIZATION"]
+    entities = []
+    entities_set = None
+
+    def fit(self, X, y, **fit_params):
+        text_all = " ".join(X)
+        entities = named_entities(text_all, self.types)
+        self.entities = entity_dict_to_list(entities)
+        self.entities_set = set(self.entities)
+        return self
+
+    def transform(self, X, **fit_params):
+        X_data = []
+        for text in X:
+            entities = named_entities(text, self.types)
+            entities_in_row = entity_dict_to_list(entities)
+            positions = position_list(self.entities_set, entities_in_row)
+            X_data.append(positions)
+        X_data = np.array(X_data)
+        if X_data.shape[1] == 0:
+            raise ValueError("No named entities in training data!")
+        return X_data
+
+    def get_params(self, deep=False):
+        return {}
 
 class EmotionFeaturizer(BaseTransformer):
     """This class is used to extract macro-features of the text.
