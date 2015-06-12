@@ -39,7 +39,9 @@ import collections
 import pandas as pd
 import itertools
 from scipy.sparse import csr_matrix
+from nltk.corpus import stopwords
 
+cachedStopWords = stopwords.words("english")
 nltk.data.path.append('/nltk_data/')
 
 
@@ -53,8 +55,6 @@ class RidgeWithStats(Ridge):
 def module_from_name(module):
     if module == "bag-of-words":
         return ("bag-of-words", CountVectorizer())
-    if module == "emotions":
-        return ("emotions", EmotionFeaturizer())
     if module == "entities":
         return ("entities", NamedEntityFeaturizer())
     if module == "aggregate":
@@ -105,8 +105,11 @@ def named_entities(text, types=None):
     tokens = nltk.tokenize.word_tokenize(text)
     pos = nltk.pos_tag(tokens)
     sentt = nltk.ne_chunk(pos, binary=False)
+
     for type_ in types:
-        for subtree in sentt.subtrees(filter=lambda t: t.label() == type_):
+        def f(t):
+            return t.label() == type_
+        for subtree in sentt.subtrees(filter=f):
             entity = ""
             for leaf in subtree.leaves():
                 entity = entity + " " + leaf[0]
@@ -188,43 +191,31 @@ class NamedEntityFeaturizer(BaseTransformer):
         return self.entities_set
 
 
-class EmotionFeaturizer(BaseTransformer):
-    """This class is used to extract macro-features of the text.
-    Currently, it includes sentiment and subjectivity"""
-    types = ["polarity", "subjectivity"]
-
-    def value_given_type(self, type_, text):
-        sentiment = TextBlob(text).sentiment._asdict()
-        return sentiment[type_]
-
-    def transform(self, X, **fit_params):
-        X_data = []
-        for text in X:
-            text_data = []
-            # Use list comprehension
-            for type_ in self.types:
-                text_data.append(self.value_given_type(type_, text))
-            X_data.append(text_data)
-        X_data = np.array(X_data)
-        return csr_matrix(X_data)
-
-    def get_feature_names(self):
-        return TextBlob("").sentiment._asdict().keys()
-
-
 def aggregate_features(text):
     f = collections.OrderedDict()
-    f['length'] = len(text)
     f['questions'] = text.count('?')
     f['exclamation'] = text.count('!')
+    f['commas'] = text.count(',')
 
-    sentences = TextBlob(text).sentences
+    tb = TextBlob(text)
+
+    sentences = tb.sentences
     f['number of sentences'] = len(sentences)
+    f['number of words'] = len(tb.words)
     lengths = Series([len(s) for s in sentences])
     f['length_std'] = lengths.std() if f['number of sentences'] > 1 else 0
 
-    return f
+    share_stopwords = Series([(w in cachedStopWords) for w in tb.words]).mean()
+    f['share stopwords'] = share_stopwords
 
+    certain_words = ['sure', 'certain', 'undoubt', 'clear', 'absolute']
+    certain_number = Series([len(re.findall(cw, text)) for cw in certain_words]).sum()
+    f['certain_share'] = certain_number / f['number of words']
+
+    sentiment = TextBlob(text).sentiment._asdict()
+    f.update(sentiment)
+
+    return f
 
 
 class AggregateFeaturizer(BaseTransformer):
@@ -235,6 +226,7 @@ class AggregateFeaturizer(BaseTransformer):
 
     def get_feature_names(self):
         return aggregate_features("").keys()
+
 
 class TextModel:
     """This is the main class from this module. It allows you to build a
@@ -376,7 +368,7 @@ class TextCleaner(BaseTransformer):
                 self.lowercase = self.options["lowercase"]
 
     def transform(self, X, **fit_params):
-        rx = re.compile("[^a-zA-Z]+")
+        rx = re.compile("[^a-zA-Z.?!,;:-]+")
         X_cleaned = [rx.sub(' ', str(t)).strip() for t in X]
         if self.lowercase:
             X_cleaned = [t.lower() for t in X_cleaned]

@@ -46,28 +46,12 @@ class TestFeaturizers(unittest.TestCase):
         X_test = named_entity_featurizer.transform([text_test])
 
         # In the training sample, both features are found.
-        self.assertEqual(X_train.tolist(), [[1, 1]],
+        self.assertEqual(X_train.todense().tolist(), [[1, 1]],
                          "Training data not correctly featurized")
         # In the test sample, only the second feature (as ordered by
         # the training sample) is found
-        self.assertEqual(X_test.tolist(), [[0, 1]],
+        self.assertEqual(X_test.todense().tolist(), [[0, 1]],
                          "Test data not correctly featurized")
-
-    def test_emotion(self):
-        """Testing that the emotion featurizer returns the same values 
-        one would get from tagging sentiment by hand"""
-
-        text = "I am happy and you better believe it."
-        sentiment = TextBlob(text).sentiment
-
-        emotion_featurizer = tm.EmotionFeaturizer()
-        transformed = emotion_featurizer.fit_transform([text], y=None)
-
-        print "Transformed: %s" % transformed
-
-        self.assertEqual(transformed[0, 0], sentiment.polarity)
-        self.assertEqual(transformed[0, 1], sentiment.subjectivity)
-
 
     def test_aggregate(self):
         modules = ["aggregate"]
@@ -89,7 +73,7 @@ class TestTextModel(unittest.TestCase):
 
     def test_feature_union(self):
         """Tests that combining multiple featurizers works as expected"""
-        modules = ["bag-of-words", "emotions", "entities"]
+        modules = ["bag-of-words", "entities"]
         modules_list, _ = modules_to_dictionary(modules)
         feature_union = FeatureUnion(modules_list)
         feature_union.fit(texts_entities, outcomes)
@@ -100,18 +84,14 @@ class TestTextModel(unittest.TestCase):
         into a list and dictionary"""
 
         module_bag_of_words = ("bag-of-words", CountVectorizer())
-        module_emotions = ("emotions", tm.EmotionFeaturizer())
+        module_aggregate = ("aggregate", tm.AggregateFeaturizer())
 
-        modules = ["bag-of-words", "emotions"]
+        modules = ["bag-of-words", "aggregate"]
         modules_list, _ = tm.modules_to_dictionary(modules)
-        expected_module_list = [module_bag_of_words, module_emotions]
+        expected_module_list = [module_bag_of_words, module_aggregate]
         for i in range(len(modules)):
             self.assertEqual(modules_list[i][0], expected_module_list[i][0])
             self.assertEqual(type(modules_list[i][1]), type(expected_module_list[i][1]))
-
-        modules = {"bag-of-words": {"max__features": None},
-                   'emotions': True, 'entities': True, 'topics': True
-        }
 
     def test_create_basic_model(self):
         """Testing example usages"""
@@ -124,7 +104,7 @@ class TestTextModel(unittest.TestCase):
         modules = ["bag-of-words"]
         text_model = TextModel(outcomes, texts, modules, options)
 
-        modules = ["bag-of-words", "emotions", "entities"]
+        modules = ["bag-of-words", "entities"]
         text_model = TextModel(outcomes, texts_entities, modules)
 
         modules = {"bag-of-words": {"max__features": None},
@@ -132,7 +112,7 @@ class TestTextModel(unittest.TestCase):
 
         # As of now, the named entities don't work with lower case. Needs
         # to be fixed.
-        modules = ["bag-of-words", "emotions"]
+        modules = ["bag-of-words", "aggregate"]
         options = {"lowercase": True, "lemmatize": True}
         text_model = TextModel(outcomes, texts_entities,
                                modules, options)
@@ -206,12 +186,13 @@ class TestTextSummary(unittest.TestCase):
     def test_regression_table(self):
         """The features `one` and `eleven` are most important"""
         table = self.summ.get_regression_table()
+        print table
         first_two = table.index[0:2]
-        self.assertTrue("eleven" in first_two)
-        self.assertTrue("one" in first_two)
+        self.assertTrue("bag-of-words__eleven" in first_two)
+        self.assertTrue("bag-of-words__one" in first_two)
 
     def test_features(self):
-        modules = ["bag-of-words", "emotions"]
+        modules = ["bag-of-words", "aggregate"]
         print "Mods: %s" %modules
         text_model = TextModel(outcomes, texts_entities, modules, self.options)
         summ = text_model.summary
